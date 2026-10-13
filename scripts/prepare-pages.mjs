@@ -11,9 +11,9 @@ async function copyWebAssets(directory, destination) {
     const path = resolve(directory, entry.name);
     const output = resolve(destination, entry.name);
     if (entry.isDirectory()) await copyWebAssets(path, output);
-    else if (!entry.name.toLowerCase().endsWith('.mp4')) await copyFile(path, output);
+    else await copyFile(path, output);
   }
 }
 
 await copyWebAssets(publicDirectory, dist);
-console.log('Prepared GitHub Pages assets. MP4 videos are hosted as GitHub Release assets.');
+console.log('Prepared GitHub Pages assets, including all locally hosted videos.');
