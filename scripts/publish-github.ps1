@@ -104,6 +104,10 @@ function Upload-ReleaseAsset {
   )
   if ($File.Length -ge 2GB) { throw "GitHub Releases cannot accept this large file: $($File.Name)" }
   $existing = @($Release.assets | Where-Object { Test-AssetNameEqual -AssetName ([string]$_.name) -FileName $File.Name }) | Select-Object -First 1
+  if ($null -eq $existing -and $File.Name -match '[^\x00-\x7F]') {
+    $sameSizeAssets = @($Release.assets | Where-Object { [long]$_.size -eq [long]$File.Length })
+    if ($sameSizeAssets.Count -eq 1) { $existing = $sameSizeAssets[0] }
+  }
   if ($null -ne $existing) {
     if ([long]$existing.size -ne [long]$File.Length) {
       throw "A release asset named $($File.Name) already exists with a different size; it was left untouched."
