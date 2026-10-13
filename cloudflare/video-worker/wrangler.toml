@@ -1,0 +1,14 @@
+name = "yuta-portfolio-video"
+main = "src/index.js"
+compatibility_date = "2026-10-13"
+workers_dev = true
+
+[assets]
+directory = "../../release"
+binding = "ASSETS"
+run_worker_first = ["/videos/*"]
+not_found_handling = "404-page"
+
+[[r2_buckets]]
+binding = "VIDEOS"
+bucket_name = "yuta-portfolio-videos"

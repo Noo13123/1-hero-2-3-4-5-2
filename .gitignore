@@ -1,0 +1,14 @@
+node_modules/
+dist/
+outputs/
+release/
+.wrangler/
+.npm-cache/
+prepare-portfolio-for-github.cmd
+.env
+.env.*
+!.env.example
+public/*.mp4
+public/videos/*.mp4
+.gcm/
+.portfolio-publish-git/
