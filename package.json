@@ -1,0 +1,16 @@
+{
+  "name": "yuta-editor-portfolio",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "build:pages": "vite build --config vite.pages.config.js && node scripts/prepare-pages.mjs",
+    "build:cloudflare": "vite build --config vite.pages.config.js && node scripts/prepare-pages.mjs",
+    "preview": "vite preview",
+    "deploy:site": "npm run build:cloudflare && npm exec --yes --package=wrangler@4.150.0 -- wrangler deploy --config cloudflare/video-worker/wrangler.toml"
+  },
+  "dependencies": { "@vitejs/plugin-react": "latest", "vite": "latest", "react": "latest", "react-dom": "latest", "lucide-react": "^0.468.0" },
+  "devDependencies": {}
+}
