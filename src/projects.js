@@ -5,7 +5,7 @@ export const projects = [
   { id: '04', title: '馈赠', type: 'DOUYIN · EDIT', year: '2026', video: '/videos/gift.mp4', note: '把灵感与节奏，剪成一份馈赠', featured: true, ratio: 'wide' },
   { id: '05', title: '切刀慢动作', type: 'FPS · GAMEPLAY EDIT', year: '2025', video: '/videos/15.mp4', note: '缘分落地生根是我们' },
   { id: '06', title: '残局开头', type: 'FPS · FRAG MOVIE', year: '2025', video: '/videos/AAAme.mp4', note: '让操作与音乐，在同一个瞬间爆发' },
-  { id: '07', title: '随便搞搞', type: 'FPS · FRAG MOVIE', year: '2026', video: '/videos/随便搞搞.mp4', note: '把每一帧灵感，剪成新的高光' },
+  { id: '07', title: '随便搞搞', type: 'FPS · FRAG MOVIE', year: '2026', video: '/videos/contact-background.mp4', note: '把每一帧灵感，剪成新的高光' },
   { id: '08', title: '切刀慢动作', type: 'FPS · GAMEPLAY EDIT', year: '2026', video: '/videos/knife-slowmo-01.mp4', note: '刀光掠过的瞬间，慢下来更有力量' },
   { id: '09', title: '切刀慢动作', type: 'FPS · GAMEPLAY EDIT', year: '2026', video: '/videos/knife-slowmo-02.mp4', note: '用慢动作留住每一次锋芒' },
 ];
