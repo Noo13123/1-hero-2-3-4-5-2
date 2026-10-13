@@ -2,7 +2,7 @@ name: Deploy portfolio to GitHub Pages
 
 on:
   push:
-    branches: [main]
+    branches: [main, clean-main]
   workflow_dispatch:
 
 permissions:
@@ -20,6 +20,8 @@ jobs:
     steps:
       - name: Check out source
         uses: actions/checkout@v4
+        with:
+          lfs: true
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
@@ -31,8 +33,6 @@ jobs:
         uses: actions/configure-pages@v5
       - name: Build site
         run: npm run build:pages
-        env:
-          VITE_VIDEO_BASE_URL: https://github.com/Noo13123/1-hero-2-3-4-5-2/releases/download/portfolio-media-v1
       - name: Upload site artifact
         uses: actions/upload-pages-artifact@v3
         with:

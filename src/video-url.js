@@ -1,5 +1,4 @@
-const productionVideoBaseUrl = 'https://github.com/Noo13123/1-hero-2-3-4-5-2/releases/download/portfolio-media-v1';
-const configuredVideoBaseUrl = import.meta.env.VITE_VIDEO_BASE_URL || (import.meta.env.PROD ? productionVideoBaseUrl : '');
+const configuredVideoBaseUrl = import.meta.env.VITE_VIDEO_BASE_URL || '';
 const videoBaseUrl = configuredVideoBaseUrl.replace(/\/$/, '');
 
 const remoteKeyFor = (path) => `/${encodeURIComponent(path.split('/').pop())}`;
