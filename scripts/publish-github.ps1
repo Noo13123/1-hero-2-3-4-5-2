@@ -126,6 +126,10 @@ function Upload-ReleaseAsset {
       if ([int]$response.StatusCode -eq 422 -and $responseBody -match 'already_exists') {
         $latestRelease = Invoke-GitHubApi -Method GET -Uri "$ApiRoot/releases/tags/$ReleaseTag"
         $duplicate = @($latestRelease.assets | Where-Object { Test-AssetNameEqual -AssetName ([string]$_.name) -FileName $File.Name }) | Select-Object -First 1
+        if ($null -eq $duplicate) {
+          $sameSizeAssets = @($latestRelease.assets | Where-Object { [long]$_.size -eq [long]$File.Length })
+          if ($sameSizeAssets.Count -eq 1) { $duplicate = $sameSizeAssets[0] }
+        }
         if ($null -ne $duplicate -and [long]$duplicate.size -eq [long]$File.Length) {
           $Release.assets = @($latestRelease.assets)
           Write-Host "Already uploaded: $($File.Name)"
