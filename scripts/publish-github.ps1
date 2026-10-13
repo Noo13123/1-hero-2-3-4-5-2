@@ -21,6 +21,13 @@ function Get-HttpStatusCode($ErrorRecord) {
   try { return [int]$ErrorRecord.Exception.Response.StatusCode } catch { return 0 }
 }
 
+function Test-AssetNameEqual {
+  param([string]$AssetName, [string]$FileName)
+  $decodedName = $AssetName
+  try { $decodedName = [Uri]::UnescapeDataString($AssetName) } catch { }
+  return [string]::Equals($decodedName, $FileName, [StringComparison]::OrdinalIgnoreCase)
+}
+
 function Invoke-GitHubApi {
   param(
     [Parameter(Mandatory = $true)][string]$Method,
@@ -96,7 +103,7 @@ function Upload-ReleaseAsset {
     [Parameter(Mandatory = $true)][System.Net.Http.HttpClient]$Client
   )
   if ($File.Length -ge 2GB) { throw "GitHub Releases cannot accept this large file: $($File.Name)" }
-  $existing = @($Release.assets | Where-Object { $_.name -ceq $File.Name }) | Select-Object -First 1
+  $existing = @($Release.assets | Where-Object { Test-AssetNameEqual -AssetName ([string]$_.name) -FileName $File.Name }) | Select-Object -First 1
   if ($null -ne $existing) {
     if ([long]$existing.size -ne [long]$File.Length) {
       throw "A release asset named $($File.Name) already exists with a different size; it was left untouched."
@@ -116,6 +123,15 @@ function Upload-ReleaseAsset {
     $response = $Client.PostAsync($uploadUri, $content).GetAwaiter().GetResult()
     if (-not $response.IsSuccessStatusCode) {
       $responseBody = $response.Content.ReadAsStringAsync().GetAwaiter().GetResult()
+      if ([int]$response.StatusCode -eq 422 -and $responseBody -match 'already_exists') {
+        $latestRelease = Invoke-GitHubApi -Method GET -Uri "$ApiRoot/releases/tags/$ReleaseTag"
+        $duplicate = @($latestRelease.assets | Where-Object { Test-AssetNameEqual -AssetName ([string]$_.name) -FileName $File.Name }) | Select-Object -First 1
+        if ($null -ne $duplicate -and [long]$duplicate.size -eq [long]$File.Length) {
+          $Release.assets = @($latestRelease.assets)
+          Write-Host "Already uploaded: $($File.Name)"
+          return
+        }
+      }
       throw "Upload failed for $($File.Name): HTTP $([int]$response.StatusCode) $responseBody"
     }
     $uploadedAsset = $response.Content.ReadAsStringAsync().GetAwaiter().GetResult() | ConvertFrom-Json
@@ -154,8 +170,9 @@ try {
   $remoteRefs = @(& $Git -C $Root -c http.sslBackend=openssl ls-remote origin refs/heads/main)
   $remoteMain = ''
   if ($remoteRefs.Count -gt 0) { $remoteMain = ($remoteRefs[0] -split '\s+')[0] }
-  if ($remoteMain -and $remoteMain -ne $firstCommit -and $remoteMain -ne $head) {
-    throw 'The remote main branch has changed since preparation; it was not overwritten.'
+  if ($remoteMain) {
+    & $Git -C $Root -c http.sslBackend=openssl merge-base --is-ancestor $remoteMain $head
+    if ($LASTEXITCODE -ne 0) { throw 'The remote main branch is not part of the prepared publishing history; it was not overwritten.' }
   }
   if (-not $remoteMain) {
     Write-Host 'Uploading the website source to the public repository...'
@@ -174,10 +191,10 @@ try {
   $client.DefaultRequestHeaders.Add('X-GitHub-Api-Version', '2022-11-28')
   foreach ($file in $videoFiles) { Upload-ReleaseAsset -Release $release -File $file -Client $client }
 
-  $backgroundVideos = @('cxyveil.mp4', '随便搞搞.mp4')
   $probeClient = [System.Net.Http.HttpClient]::new()
   $probeClient.Timeout = [TimeSpan]::FromMinutes(2)
-  foreach ($videoName in $backgroundVideos) {
+  foreach ($videoFile in $videoFiles) {
+    $videoName = $videoFile.Name
     $encodedName = [Uri]::EscapeDataString($videoName)
     $assetUrl = "https://github.com/$Owner/$Repository/releases/download/$ReleaseTag/$encodedName"
     $probe = [System.Net.Http.HttpRequestMessage]::new([System.Net.Http.HttpMethod]::Get, $assetUrl)
@@ -186,7 +203,7 @@ try {
     if ([int]$probeResponse.StatusCode -ne 206) {
       throw "Anonymous playback check failed for $($videoName): HTTP $([int]$probeResponse.StatusCode)."
     }
-    Write-Host "Anonymous background video check passed: $videoName"
+    Write-Host "Anonymous video check passed: $videoName"
     $probeResponse.Dispose()
     $probe.Dispose()
   }
