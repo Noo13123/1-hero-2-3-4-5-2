@@ -1,6 +1,7 @@
 $ErrorActionPreference = 'Stop'
 $ProgressPreference = 'SilentlyContinue'
 [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
+Add-Type -AssemblyName System.Net.Http
 
 $Owner = 'Noo13123'
 $Repository = '1-hero-2-3-4-5-2'
@@ -173,19 +174,22 @@ try {
   $client.DefaultRequestHeaders.Add('X-GitHub-Api-Version', '2022-11-28')
   foreach ($file in $videoFiles) { Upload-ReleaseAsset -Release $release -File $file -Client $client }
 
-  $assetUrl = "https://github.com/$Owner/$Repository/releases/download/$ReleaseTag/ka-dian.mp4"
+  $backgroundVideos = @('cxyveil.mp4', '随便搞搞.mp4')
   $probeClient = [System.Net.Http.HttpClient]::new()
   $probeClient.Timeout = [TimeSpan]::FromMinutes(2)
-  $probe = [System.Net.Http.HttpRequestMessage]::new([System.Net.Http.HttpMethod]::Get, $assetUrl)
-  $probe.Headers.Range = [System.Net.Http.Headers.RangeHeaderValue]::new(0, 1023)
-  $probeResponse = $probeClient.SendAsync($probe, [System.Net.Http.HttpCompletionOption]::ResponseHeadersRead).GetAwaiter().GetResult()
-  if ([int]$probeResponse.StatusCode -eq 206) {
-    Write-Host 'Anonymous video range playback check passed.'
-  } else {
-    Write-Host "Video URL answered HTTP $([int]$probeResponse.StatusCode); playback may need a browser check."
+  foreach ($videoName in $backgroundVideos) {
+    $encodedName = [Uri]::EscapeDataString($videoName)
+    $assetUrl = "https://github.com/$Owner/$Repository/releases/download/$ReleaseTag/$encodedName"
+    $probe = [System.Net.Http.HttpRequestMessage]::new([System.Net.Http.HttpMethod]::Get, $assetUrl)
+    $probe.Headers.Range = [System.Net.Http.Headers.RangeHeaderValue]::new(0, 1023)
+    $probeResponse = $probeClient.SendAsync($probe, [System.Net.Http.HttpCompletionOption]::ResponseHeadersRead).GetAwaiter().GetResult()
+    if ([int]$probeResponse.StatusCode -ne 206) {
+      throw "Anonymous playback check failed for $($videoName): HTTP $([int]$probeResponse.StatusCode)."
+    }
+    Write-Host "Anonymous background video check passed: $videoName"
+    $probeResponse.Dispose()
+    $probe.Dispose()
   }
-  $probeResponse.Dispose()
-  $probe.Dispose()
   $probeClient.Dispose()
   $client.Dispose()
 
